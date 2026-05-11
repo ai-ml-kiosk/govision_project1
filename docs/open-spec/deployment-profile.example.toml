@@ -1,0 +1,64 @@
+# GoVision deployment profile example.
+# Copy to /etc/govision/device.toml and edit for each physical device.
+
+[device]
+id = "govision-lab-001"
+site = "lab"
+role = "bench"
+timezone = "system"
+
+[network]
+hostname = "nano"
+interface = "wlan0"
+display_ip_on_oled = true
+
+[visible_camera]
+enabled = true
+type = "imx219"
+sensor_ids = [0]
+capture_width = 1280
+capture_height = 720
+display_width = 1280
+display_height = 720
+framerate = 30
+flip_method = 0
+# sensor_mode = 3
+
+[thermal_camera]
+enabled = true
+type = "flir_lepton_2_5"
+i2c_bus = 0
+i2c_address = "0x2A"
+spi_bus = 0
+spi_device = 1
+spi_speed_hz = 18000000
+width = 80
+height = 60
+packet_size = 164
+tlinear_scale = 100
+flip_code = 0
+output_scale = 8
+
+[oled]
+enabled = true
+type = "ssd1306_128x64_i2c"
+i2c_port = 1
+i2c_address = "0x3C"
+rotate = 0
+refresh_s = 1.0
+show_ip = true
+show_power = true
+
+[fan]
+enabled = true
+controller = "pwm-fan"
+fan_dir = "/sys/devices/pwm-fan"
+interval_s = 5.0
+curve = ["30:70", "45:80", "55:120", "65:160", "75:220", "82:255"]
+restore_kernel_auto_on_stop = true
+
+[services]
+flask_enabled = true
+oled_enabled = true
+fan_control_enabled = true
+install_user = "jetson"

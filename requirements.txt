@@ -1,4 +1,7 @@
 flask
-opencv-python
+# Use Jetson's system OpenCV package instead:
+#   sudo apt install python3-opencv
+# The pip opencv-python wheel does not include GStreamer/Argus support.
 numpy
 pyserial
+luma.oled

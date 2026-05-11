@@ -21,7 +21,7 @@ class CameraConfig:
     display_width: int = 1280
     display_height: int = 720
     framerate: int = 30
-    flip_method: int = 0
+    flip_method: int = 2
     sensor_mode: Optional[int] = None
 
 

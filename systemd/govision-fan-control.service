@@ -1,0 +1,15 @@
+[Unit]
+Description=GoVision Temperature-Based Fan Control
+After=multi-user.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/jetson/workspace/GoVision_proj1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/jetson/workspace/GoVision_proj1/core/fan_control.py --interval 5
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=GoVision Mini OLED Status Display
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/jetson/workspace/GoVision_proj1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 /home/jetson/workspace/GoVision_proj1/core/mini_oled.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
