@@ -25,6 +25,10 @@ identifiers in the repository.
 - [Operations](operations.md): commissioning, validation, and maintenance.
 - [Deployment Profile Example](deployment-profile.example.toml): copyable
   template for new devices.
+- [Camera Test Guide](../camera-testing.md): IMX219 still capture, live
+  streaming, orientation, resolution, and troubleshooting examples.
+- [FLIR Test Guide](../flir-testing.md): SPI auto-detect, still capture,
+  live streaming, tuning, and troubleshooting examples.
 
 ## Baseline Implementation
 

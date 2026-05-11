@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from glob import glob
-from typing import Any, Optional
+from typing import Any, Iterable, List, Optional, Sequence, Tuple
 
 import cv2
 import numpy as np
@@ -13,6 +13,8 @@ import numpy as np
 
 RawThermalFrame = np.ndarray
 ColorThermalFrame = np.ndarray
+SpiCandidate = Tuple[int, int]
+DEFAULT_SPI_CANDIDATES: Tuple[SpiCandidate, ...] = ((0, 0), (0, 1), (1, 0), (1, 1))
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,40 @@ class LeptonConfig:
     resync_delay_s: float = 0.2
 
 
+@dataclass(frozen=True)
+class SpiProbeResult:
+    """One low-speed SPI probe result for finding the active Lepton device."""
+
+    bus: int
+    device: int
+    prefix_hex: str
+    unique_values: Tuple[int, ...]
+    error: Optional[str] = None
+
+    @property
+    def active_score(self) -> int:
+        if self.error:
+            return -1
+        if not self.unique_values:
+            return 0
+        if len(self.unique_values) == 1 and self.unique_values[0] in (0, 255):
+            return 0
+
+        first_byte = int(self.prefix_hex[:2], 16) if len(self.prefix_hex) >= 2 else 0
+        score = 1
+        if any(value not in (0, 255) for value in self.unique_values):
+            score += 2
+        if len(self.unique_values) > 2:
+            score += 1
+        if (first_byte & 0x0F) == 0x0F:
+            score += 1
+        return score
+
+    @property
+    def is_active(self) -> bool:
+        return self.active_score > 0
+
+
 class ThermalError(RuntimeError):
     """Raised when the thermal camera cannot be opened or read."""
 
@@ -42,6 +78,118 @@ def _spidev_hint() -> str:
         return f" Available SPI devices: {', '.join(nodes)}."
 
     return " No /dev/spidev* devices are present; enable SPI on the Jetson header and reboot."
+
+
+def parse_spi_candidates(value: str) -> Tuple[SpiCandidate, ...]:
+    """Parse ``bus.device`` entries such as ``0.0,0.1,1.0,1.1``."""
+
+    candidates: List[SpiCandidate] = []
+    for item in value.split(","):
+        bus, device = item.strip().split(".", 1)
+        candidates.append((int(bus), int(device)))
+    return tuple(candidates)
+
+
+def probe_spidev(
+    bus: int,
+    device: int,
+    speed_hz: int = 2_000_000,
+    packet_size: int = LeptonConfig.packet_size,
+    spi_mode: int = LeptonConfig.spi_mode,
+) -> SpiProbeResult:
+    """Read one packet-sized transfer and score whether it looks like Lepton traffic."""
+
+    try:
+        import spidev
+    except ImportError as exc:
+        return SpiProbeResult(bus, device, "", (), f"missing spidev: {exc}")
+
+    spi = spidev.SpiDev()
+    try:
+        spi.open(bus, device)
+        spi.mode = spi_mode
+        spi.max_speed_hz = speed_hz
+        data = bytes(spi.xfer2([0] * packet_size))
+        return SpiProbeResult(
+            bus=bus,
+            device=device,
+            prefix_hex=data[:16].hex(),
+            unique_values=tuple(sorted(set(data))[:8]),
+        )
+    except Exception as exc:
+        return SpiProbeResult(bus, device, "", (), str(exc))
+    finally:
+        try:
+            spi.close()
+        except Exception:
+            pass
+
+
+def scan_spidev(
+    candidates: Sequence[SpiCandidate] = DEFAULT_SPI_CANDIDATES,
+    speed_hz: int = 2_000_000,
+    packet_size: int = LeptonConfig.packet_size,
+    spi_mode: int = LeptonConfig.spi_mode,
+) -> List[SpiProbeResult]:
+    """Probe candidate SPI devices for non-flat Lepton-like traffic."""
+
+    return [
+        probe_spidev(
+            bus,
+            device,
+            speed_hz=speed_hz,
+            packet_size=packet_size,
+            spi_mode=spi_mode,
+        )
+        for bus, device in candidates
+    ]
+
+
+def select_active_spidev(probes: Iterable[SpiProbeResult]) -> Optional[SpiProbeResult]:
+    """Return the most likely active Lepton SPI device from probe results."""
+
+    active = [probe for probe in probes if probe.is_active]
+    if not active:
+        return None
+    return max(active, key=lambda probe: probe.active_score)
+
+
+def find_active_spidev(
+    candidates: Sequence[SpiCandidate] = DEFAULT_SPI_CANDIDATES,
+    speed_hz: int = 2_000_000,
+    packet_size: int = LeptonConfig.packet_size,
+    spi_mode: int = LeptonConfig.spi_mode,
+) -> Optional[SpiProbeResult]:
+    """Probe candidate SPI devices and return the most likely active Lepton path."""
+
+    return select_active_spidev(
+        scan_spidev(
+            candidates=candidates,
+            speed_hz=speed_hz,
+            packet_size=packet_size,
+            spi_mode=spi_mode,
+        )
+    )
+
+
+def config_with_detected_spidev(
+    config: Optional[LeptonConfig] = None,
+    candidates: Sequence[SpiCandidate] = DEFAULT_SPI_CANDIDATES,
+    probe_speed_hz: int = 2_000_000,
+) -> LeptonConfig:
+    """Return a Lepton config updated with the detected active SPI bus/device."""
+
+    base = config or LeptonConfig()
+    probe = find_active_spidev(
+        candidates=candidates,
+        speed_hz=probe_speed_hz,
+        packet_size=base.packet_size,
+        spi_mode=base.spi_mode,
+    )
+    if probe is None:
+        raise ThermalError("No active FLIR-like SPI device found.")
+
+    return replace(base, spi_bus=probe.bus, spi_device=probe.device)
 
 
 def normalize_14bit_to_8bit(
