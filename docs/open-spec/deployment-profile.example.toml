@@ -30,7 +30,7 @@ type = "flir_lepton_2_5"
 i2c_bus = 0
 i2c_address = "0x2A"
 spi_bus = 0
-spi_device = 1
+spi_device = 0
 spi_speed_hz = 18000000
 width = 80
 height = 60
@@ -49,6 +49,24 @@ refresh_s = 1.0
 show_ip = true
 show_power = true
 
+[lcd_touch_display]
+enabled = false
+type = "spi_tft_480x320_touch"
+lcd_controller = "unknown"
+touch_controller = "xpt2046"
+spi_bus = 1
+lcd_spi_device = 0
+touch_spi_device = 1
+width = 480
+height = 320
+rotation = 0
+dc_pin = 15
+reset_pin = 31
+backlight_pin = 32
+touch_irq_pin = 36
+target_fps = 8
+logic_voltage = "3.3V"
+
 [fan]
 enabled = true
 controller = "pwm-fan"
@@ -60,5 +78,6 @@ restore_kernel_auto_on_stop = true
 [services]
 flask_enabled = true
 oled_enabled = true
+lcd_touch_enabled = false
 fan_control_enabled = true
 install_user = "jetson"

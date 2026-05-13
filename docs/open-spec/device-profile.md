@@ -52,6 +52,27 @@ and local overrides.
 - `show_power`: Boolean.
 - `show_ip`: Boolean.
 
+### `[lcd_touch_display]`
+
+- `enabled`: Boolean.
+- `type`: Generic display type such as `spi_tft_480x320_touch` until the
+  exact controller is confirmed.
+- `lcd_controller`: LCD controller name, for example `ili9488`, `st7796`, or
+  `unknown`.
+- `touch_controller`: Touch controller name, usually `xpt2046` or
+  `unknown`.
+- `spi_bus`: Shared SPI bus for the LCD and touch controller.
+- `lcd_spi_device`: SPI chip select device for the LCD, recommended `0` on
+  SPI1.
+- `touch_spi_device`: SPI chip select device for touch, recommended `1` on
+  SPI1.
+- `width`, `height`.
+- `rotation`: Display rotation used by the UI.
+- `dc_pin`, `reset_pin`, `backlight_pin`, `touch_irq_pin`: Jetson J41
+  physical pin numbers.
+- `target_fps`: Expected local preview frame rate.
+- `logic_voltage`: Expected GPIO/SPI logic voltage, normally `3.3V`.
+
 ### `[fan]`
 
 - `enabled`: Boolean.
@@ -65,6 +86,7 @@ and local overrides.
 
 - `flask_enabled`: Boolean.
 - `oled_enabled`: Boolean.
+- `lcd_touch_enabled`: Boolean.
 - `fan_control_enabled`: Boolean.
 - `install_user`: User that owns the project checkout.
 

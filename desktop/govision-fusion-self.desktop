@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=GoVision Fusion Viewer
+Comment=Open the 480x320 CSI plus FLIR fusion viewer with controls
+Path=/home/jetson/workspace/GoVision_proj1
+Exec=/home/jetson/workspace/GoVision_proj1/desktop/launch-fusion-self.sh
+Terminal=false
+StartupNotify=false
+Categories=Utility;

@@ -7,7 +7,7 @@ Status: Draft implementation plan
 - **Primary (Visible):** IMX219-83 CSI camera in the lower position.
 - **Secondary (Thermal):** FLIR Lepton 2.5 in the upper position.
 - **Orientation:** Vertical stack, with the optical axes intended to be roughly parallel.
-- **Physical Offset:** Estimated 10mm to 20mm vertical baseline. Final alignment must be tuned in software.
+- **Physical Offset:** The FLIR is mounted above the midpoint of the twin-lens CSI module with about a 35mm vertical baseline. Final alignment must still be tuned in software because parallax changes with subject distance.
 
 ## 2. Feasibility Summary
 
@@ -33,11 +33,12 @@ Recommended registration pipeline:
 5. Colorize or threshold the thermal data depending on the selected fusion mode.
 6. Blend or composite the result back into a stream-sized output frame.
 
-Initial crop estimates for 1280x720:
+Initial crop estimates for the fusion self-viewer:
 
-- Horizontal crop: roughly 800px to 820px centered, based on 50° thermal horizontal FoV over 73° visible horizontal FoV.
-- Vertical crop: start around 540px, then tune using calibration captures.
-- Offset sliders: expose at least `x_offset_px` and `y_offset_px` because physical mounting will dominate the final alignment.
+- Visible crop width ratio: start around `0.64`, based on 50° thermal horizontal FoV over 73° visible horizontal FoV.
+- Visible crop height ratio: start at `1.0` for the 480x320 self-viewer surface, then tune using calibration captures.
+- Thermal y offset: start around `-24` display pixels because the FLIR is above the CSI center; negative y shifts the thermal overlay up.
+- Offset controls: expose at least `x_offset_px` and `y_offset_px` because physical mounting and working distance dominate the final alignment.
 
 These numbers are only starting points. The saved calibration should be the source of truth for each device.
 
@@ -138,7 +139,7 @@ Expected hardware paths from the open spec:
 
 - Visible camera: `sensor-id=0`
 - Lepton CCI/I2C: bus `0`, address `0x2A`
-- Lepton SPI: `/dev/spidev0.1`
+- Lepton SPI: `/dev/spidev0.0`
 
 ### Alignment Validation
 
