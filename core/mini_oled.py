@@ -20,6 +20,8 @@ Default bus/address: /dev/i2c-1 at 0x3C. Check with: i2cdetect -y -r 1
 Use 3.3V I2C logic. Only use 5V VCC if the OLED breakout explicitly supports it.
 """
 
+PWM_FAN_DIR = "/sys/devices/pwm-fan"
+
 
 @dataclass(frozen=True)
 class OLEDConfig:
@@ -53,6 +55,9 @@ class DeviceHealth:
     current_a: Optional[float]
     power_watts: Optional[float]
     warnings: Tuple[str, ...] = field(default_factory=tuple)
+    cpu_count: int = 1
+    load_percent: float = 0.0
+    fan_rpm: Optional[int] = None
 
 
 class OLEDDisplayError(RuntimeError):
@@ -76,6 +81,13 @@ def _read_float(path: str) -> Optional[float]:
         return float(value.split()[0])
     except (IndexError, ValueError):
         return None
+
+
+def _read_int(path: str) -> Optional[int]:
+    value = _read_float(path)
+    if value is None:
+        return None
+    return int(value)
 
 
 def _format_now(timezone: Optional[str]) -> str:
@@ -122,7 +134,14 @@ def _format_uptime() -> str:
 
 
 def _get_ip_address() -> str:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    except OSError:
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except OSError:
+            return "offline"
+
     try:
         sock.connect(("8.8.8.8", 80))
         return sock.getsockname()[0]
@@ -155,6 +174,18 @@ def _memory_percent() -> float:
 def _disk_percent(path: str = "/") -> float:
     usage = shutil.disk_usage(path)
     return (usage.used / usage.total) * 100.0
+
+
+def _cpu_count() -> int:
+    return max(1, os.cpu_count() or 1)
+
+
+def _normalized_load_percent(load_1m: float, cpu_count: int) -> float:
+    return max(0.0, (load_1m / max(1, cpu_count)) * 100.0)
+
+
+def _fan_rpm(fan_dir: str = PWM_FAN_DIR) -> Optional[int]:
+    return _read_int(os.path.join(fan_dir, "rpm_measured"))
 
 
 def _thermal_zone_temps() -> Dict[str, float]:
@@ -224,9 +255,12 @@ def collect_device_health(timezone: Optional[str] = None) -> DeviceHealth:
     cpu_temp = _pick_temp(temps, ("cpu", "thermal", "aotag"))
     gpu_temp = _pick_temp(temps, ("gpu",))
     load_1m = os.getloadavg()[0] if hasattr(os, "getloadavg") else 0.0
+    cpu_count = _cpu_count()
+    load_percent = _normalized_load_percent(load_1m, cpu_count)
     mem_pct = _memory_percent()
     disk_pct = _disk_percent("/")
     voltage, current, power = _power_metrics()
+    fan_rpm = _fan_rpm()
 
     warnings: List[str] = []
     if cpu_temp is not None and cpu_temp >= 75.0:
@@ -257,6 +291,9 @@ def collect_device_health(timezone: Optional[str] = None) -> DeviceHealth:
         current_a=current,
         power_watts=power,
         warnings=tuple(warnings),
+        cpu_count=cpu_count,
+        load_percent=load_percent,
+        fan_rpm=fan_rpm,
     )
 
 
@@ -337,9 +374,27 @@ class MiniOLED:
     def _fit(self, text: str) -> str:
         return text[: self.config.max_chars]
 
+    def _table_row(self, left: str, right: str) -> str:
+        separator = " "
+        if self.config.max_chars <= len(separator):
+            return self._fit(f"{left}{right}")
+
+        left_width = (self.config.max_chars - len(separator)) // 2
+        right_width = self.config.max_chars - len(separator) - left_width
+        return (
+            left[:left_width].ljust(left_width)
+            + separator
+            + right[:right_width].ljust(right_width)
+        )
+
     def _status_lines(self, health: DeviceHealth) -> List[str]:
         cpu = "--" if health.cpu_temp_c is None else f"{health.cpu_temp_c:.0f}C"
         gpu = "--" if health.gpu_temp_c is None else f"{health.gpu_temp_c:.0f}C"
+        load_percent = health.load_percent
+        if load_percent == 0.0 and health.load_1m > 0.0:
+            load_percent = _normalized_load_percent(health.load_1m, health.cpu_count)
+        load = f"{load_percent:.0f}%"
+        rpm = "--" if health.fan_rpm is None else str(health.fan_rpm)
         voltage = "--" if health.voltage_v is None else f"{health.voltage_v:.2f}V"
         current = "--" if health.current_a is None else f"{health.current_a:.2f}A"
         power = "--" if health.power_watts is None else f"{health.power_watts:.1f}W"
@@ -347,13 +402,13 @@ class MiniOLED:
 
         return [
             health.timestamp,
-            f"IP {health.ip_address}",
-            f"CPU {cpu} GPU {gpu}",
-            f"Load {health.load_1m:.2f}",
-            f"RAM {health.memory_percent:.0f}% Disk {health.disk_percent:.0f}%",
-            f"VIN {voltage} {current}",
-            f"Pwr {power} Up {health.uptime}",
-            f"Health {status}",
+            f"IP: {health.ip_address}",
+            self._table_row(f"CPU:{cpu}", f"GPU:{gpu}"),
+            self._table_row(f"Load:{load}", f"RPM:{rpm}"),
+            self._table_row(f"RAM:{health.memory_percent:.0f}%", f"Disk:{health.disk_percent:.0f}%"),
+            self._table_row(f"VIN:{voltage}", f"I:{current}"),
+            self._table_row(f"Pwr:{power}", f"Up:{health.uptime}"),
+            f"Health:{status}",
         ]
 
 

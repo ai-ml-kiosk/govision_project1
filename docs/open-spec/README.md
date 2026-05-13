@@ -29,6 +29,8 @@ identifiers in the repository.
   streaming, orientation, resolution, and troubleshooting examples.
 - [FLIR Test Guide](../flir-testing.md): SPI auto-detect, still capture,
   live streaming, tuning, and troubleshooting examples.
+- [Source Management](../source-management.md): feature-branch workflow and
+  protected `main` guidance.
 
 ## Baseline Implementation
 

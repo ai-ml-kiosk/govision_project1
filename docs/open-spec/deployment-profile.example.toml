@@ -54,7 +54,7 @@ enabled = true
 controller = "pwm-fan"
 fan_dir = "/sys/devices/pwm-fan"
 interval_s = 5.0
-curve = ["30:70", "45:80", "55:120", "65:160", "75:220", "82:255"]
+curve = ["35:0", "45:0", "55:80", "65:120", "75:180", "82:255"]
 restore_kernel_auto_on_stop = true
 
 [services]
