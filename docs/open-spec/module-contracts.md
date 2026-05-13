@@ -83,6 +83,12 @@ Contract:
   attempted.
 - Voltage/current/power display should show `--` when sysfs readings are not
   available or not readable.
+- Load should be displayed as 1-minute load normalized by CPU count, not raw
+  load average.
+- Fan RPM is read best-effort from `/sys/devices/pwm-fan/rpm_measured` and
+  shown as `--` when unavailable.
+- Status rows below the IP line should use compact two-column formatting with
+  field labels ending in `:`.
 
 ## SPI Touch LCD
 
@@ -121,16 +127,19 @@ Contract:
 - PWM output must be clamped to configured min/max.
 - The controller should restore kernel fan auto control on service stop.
 
-Default fan curve:
+Default quiet fan curve:
 
 ```text
-30C -> PWM 70
-45C -> PWM 80
-55C -> PWM 120
-65C -> PWM 160
-75C -> PWM 220
+35C -> PWM 0
+45C -> PWM 0
+55C -> PWM 80
+65C -> PWM 120
+75C -> PWM 180
 82C -> PWM 255
 ```
+
+The previous more aggressive cooling behavior remains available with
+`--preset cool`.
 
 ## Flask App
 

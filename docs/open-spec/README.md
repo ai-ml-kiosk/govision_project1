@@ -31,6 +31,8 @@ identifiers in the repository.
   live streaming, tuning, and troubleshooting examples.
 - [SPI Touch LCD Guide](../lcd-touch-display.md): planned 480x320 SPI LCD and
   touch wiring, resource allocation, and performance expectations.
+- [Source Management](../source-management.md): feature-branch workflow and
+  protected `main` guidance.
 
 ## Baseline Implementation
 

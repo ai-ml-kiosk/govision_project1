@@ -79,7 +79,7 @@ and local overrides.
 - `controller`: `pwm-fan`.
 - `fan_dir`: Usually `/sys/devices/pwm-fan`.
 - `interval_s`.
-- `curve`: Temperature-to-PWM points as `["30:70", "45:80", ...]`.
+- `curve`: Temperature-to-PWM points as `["35:0", "45:0", ...]`.
 - `restore_kernel_auto_on_stop`: Boolean.
 
 ### `[services]`
