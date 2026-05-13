@@ -1,9 +1,14 @@
 # GoVision Project
 
-GoVision is a Jetson Nano vision and hardware integration project. It combines
-CSI visible camera capture, FLIR Lepton thermal capture, visible/thermal fusion
-experiments, a small OLED status display, fan control, and planned local
-touchscreen controls.
+GoVision is a Jetson Nano vision and kiosk hardware project. It combines CSI
+visible camera capture, FLIR Lepton thermal capture, visible/thermal fusion
+experiments, a local OLED status display, PWM fan control, desktop viewers,
+Flask MJPEG streams, and planned local touchscreen controls.
+
+The project is designed for live NVIDIA Jetson hardware. Camera, SPI, I2C,
+thermal, display, fan, and GPIO paths should be inspected before changing
+behavior, and device-specific calibration or generated captures should stay out
+of source control.
 
 ## Current Hardware Scope
 
@@ -18,62 +23,12 @@ touchscreen controls.
 All J41 GPIO, SPI, I2C, and PWM wiring must use 3.3V logic. Do not connect 5V
 logic to Jetson GPIO pins.
 
-## Key Entry Points
-
-- `app.py`: Flask MJPEG routes for camera and thermal streams.
-- `core/camera.py`: IMX219 CSI capture helpers.
-- `core/thermal.py`: FLIR Lepton SPI capture helpers.
-- `core/mini_oled.py`: OLED status display and system health rendering.
-- `core/fan_control.py`: Jetson PWM fan controller.
-- `core/camera_self.py`, `core/thermal_self.py`, `core/fusion_self.py`:
-  desktop-launched local viewers with capture controls.
-- `test/`: hardware test and live-view scripts.
-- `systemd/`: service templates and module-load configuration.
-- `desktop/`: local desktop launchers for self-viewer apps.
-
-## Documentation
-
-- [Open Spec](docs/open-spec/README.md): project-wide hardware, profile,
-  services, and operations specification.
-- [Hardware Interfaces](docs/open-spec/hardware-interfaces.md): Jetson Nano
-  bus allocation and J41 pin wiring for the camera stack, FLIR, OLED, fan, and
-  planned LCD/touch display.
-- [Device Profile](docs/open-spec/device-profile.md): deployment profile
-  fields for each physical unit.
-- [Deployment Profile Example](docs/open-spec/deployment-profile.example.toml):
-  copyable non-secret example profile.
-- [Operations](docs/open-spec/operations.md): commissioning and maintenance
-  checks.
-- [Camera Test Guide](docs/camera-testing.md): visible camera capture and live
-  viewing examples.
-- [FLIR Test Guide](docs/flir-testing.md): FLIR SPI auto-detect, still capture,
-  live viewing, and troubleshooting.
-- [SPI Touch LCD Guide](docs/lcd-touch-display.md): planned 480x320 SPI LCD
-  wiring, performance expectations, and driver details to confirm.
-- [Fusion Plan](README_Fusion.md): visible/thermal fusion feasibility,
-  alignment, and validation notes.
-
-## Source Management
-
-Do not commit or push directly to `main`. When a commit and push is requested,
-create a `codex/...` feature branch, commit and push that branch, report the
-branch and validation results, then wait for explicit approval before merging
-back to `main`.
-GoVision is a Jetson-based vision and kiosk hardware project. It combines a
-visible IMX219 CSI camera, a FLIR Lepton 2.5 thermal camera, local OLED status
-display, PWM fan control, and Flask MJPEG streams into a small deployable stack
-for hardware-backed vision experiments.
-
-The project is designed for live NVIDIA Jetson hardware. Camera, SPI, I2C,
-thermal, display, and fan paths should be inspected before changing behavior,
-and device-specific calibration or generated captures should stay out of source
-control.
-
 ## Current Capabilities
 
 - Visible IMX219 capture through Jetson GStreamer and OpenCV.
 - FLIR Lepton 2.5 VoSPI capture with SPI auto-detection helpers.
 - One-shot visible, thermal, and visible-plus-thermal fusion sample captures.
+- Desktop-launched visible, thermal, and fusion viewers with capture controls.
 - Live visible and thermal viewers with local OpenCV windows or MJPEG browser
   streams.
 - Flask MJPEG routes for visible and thermal feeds.
@@ -91,32 +46,38 @@ control.
   frame conversion helpers.
 - [core/mini_oled.py](core/mini_oled.py): mini OLED health display renderer.
 - [core/fan_control.py](core/fan_control.py): Jetson PWM fan controller.
+- `core/camera_self.py`, `core/thermal_self.py`, `core/fusion_self.py`:
+  desktop-launched local viewers with capture controls.
 - [test/](test): hardware test and live-view utilities.
 - [systemd/](systemd): service templates and module-load configuration.
+- [desktop/](desktop): local desktop launchers for self-viewer apps.
 - [docs/](docs): operating guides and open specification documents.
-- [results/](results): generated sample images. Do not commit deployment
+- `results/`: generated sample images and logs. Do not commit deployment
   captures or calibration artifacts unless they are intentionally sanitized.
 
 ## Documentation Map
 
 - [Open Spec](docs/open-spec/README.md): project goals, implementation
   baseline, and spec index.
+- [Hardware Interfaces](docs/open-spec/hardware-interfaces.md): Jetson Nano bus
+  allocation and J41 pin wiring for the camera stack, FLIR, OLED, fan, and
+  planned LCD/touch display.
 - [Device Profile](docs/open-spec/device-profile.md): expected per-device
   configuration fields.
-- [Hardware Interfaces](docs/open-spec/hardware-interfaces.md): camera, FLIR,
-  OLED, fan, and sysfs hardware notes.
+- [Deployment Profile Example](docs/open-spec/deployment-profile.example.toml):
+  copyable profile template for a new Jetson deployment.
 - [Module Contracts](docs/open-spec/module-contracts.md): reusable Python API
   and behavior contracts.
 - [Runtime Services](docs/open-spec/runtime-services.md): systemd service
   behavior, commands, permissions, and failure policy.
 - [Operations](docs/open-spec/operations.md): commissioning, validation,
   maintenance, and rollback procedures.
-- [Deployment Profile Example](docs/open-spec/deployment-profile.example.toml):
-  copyable profile template for a new Jetson deployment.
 - [Camera Test Guide](docs/camera-testing.md): visible-camera still capture,
   live viewing, orientation, resolution, and latency tuning.
 - [FLIR Test Guide](docs/flir-testing.md): FLIR SPI auto-detect, still capture,
   live viewing, sensitivity tuning, and troubleshooting.
+- [SPI Touch LCD Guide](docs/lcd-touch-display.md): planned 480x320 SPI LCD
+  wiring, performance expectations, and driver details to confirm.
 - [Fusion Plan](README_Fusion.md): visible and thermal sensor-fusion
   feasibility, calibration, implementation, and validation plan.
 - [Source Management](docs/source-management.md): required branch workflow,
