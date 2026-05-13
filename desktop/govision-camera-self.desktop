@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=GoVision Camera Viewer
+Comment=Open the 480x320 IMX219 CSI camera viewer with controls
+Path=/home/jetson/workspace/GoVision_proj1
+Exec=/home/jetson/workspace/GoVision_proj1/desktop/launch-camera-self.sh
+Terminal=false
+StartupNotify=false
+Categories=Utility;

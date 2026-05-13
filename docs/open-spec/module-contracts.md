@@ -58,7 +58,7 @@ Contract:
 Default tested thermal path:
 
 ```text
-/dev/spidev0.1 at 18 MHz
+/dev/spidev0.0 at 18 MHz
 ```
 
 ## Mini OLED
@@ -89,6 +89,22 @@ Contract:
   shown as `--` when unavailable.
 - Status rows below the IP line should use compact two-column formatting with
   field labels ending in `:`.
+
+## SPI Touch LCD
+
+Status: planned hardware addition; no stable Python module contract exists yet.
+
+Expected future module shape:
+
+- Constructor must not touch SPI or GPIO hardware.
+- Display open/init should happen lazily.
+- LCD should use `/dev/spidev1.0` by default.
+- Touch should use `/dev/spidev1.1` by default.
+- LCD DC/RS, reset, backlight, and touch IRQ must be configurable by J41
+  physical pin number.
+- Refresh loops should drop stale preview frames instead of queueing them.
+- Missing LCD or touch hardware should not break CSI, FLIR, OLED, fan, or Flask
+  behavior.
 
 ## Fan Control
 
