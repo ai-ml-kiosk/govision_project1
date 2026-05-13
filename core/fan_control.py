@@ -12,6 +12,26 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 
 PWM_FAN_DIR = "/sys/devices/pwm-fan"
+QUIET_FAN_CURVE: Tuple[Tuple[float, int], ...] = (
+    (35.0, 0),
+    (45.0, 0),
+    (55.0, 80),
+    (65.0, 120),
+    (75.0, 180),
+    (82.0, 255),
+)
+COOL_FAN_CURVE: Tuple[Tuple[float, int], ...] = (
+    (30.0, 70),
+    (45.0, 80),
+    (55.0, 120),
+    (65.0, 160),
+    (75.0, 220),
+    (82.0, 255),
+)
+FAN_CURVE_PRESETS = {
+    "quiet": QUIET_FAN_CURVE,
+    "cool": COOL_FAN_CURVE,
+}
 
 
 @dataclass(frozen=True)
@@ -23,14 +43,7 @@ class FanConfig:
     min_pwm: int = 0
     max_pwm: int = 255
     temp_control_auto: bool = False
-    curve: Tuple[Tuple[float, int], ...] = (
-        (30.0, 70),
-        (45.0, 80),
-        (55.0, 120),
-        (65.0, 160),
-        (75.0, 220),
-        (82.0, 255),
-    )
+    curve: Tuple[Tuple[float, int], ...] = QUIET_FAN_CURVE
 
 
 @dataclass(frozen=True)
@@ -238,7 +251,18 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--status", action="store_true", help="Print status without writing PWM")
     parser.add_argument("--restore-auto", action="store_true", help="Restore kernel fan auto control")
     parser.add_argument("--interval", type=float, default=FanConfig.interval_s)
-    parser.add_argument("--curve", type=_parse_curve, default=FanConfig.curve)
+    parser.add_argument(
+        "--preset",
+        choices=sorted(FAN_CURVE_PRESETS),
+        default="quiet",
+        help="Named fan curve preset",
+    )
+    parser.add_argument(
+        "--curve",
+        type=_parse_curve,
+        default=None,
+        help="Override fan curve as comma-separated TEMP:PWM points",
+    )
     parser.add_argument("--min-pwm", type=int, default=FanConfig.min_pwm)
     parser.add_argument("--max-pwm", type=int, default=FanConfig.max_pwm)
     parser.add_argument(
@@ -251,13 +275,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = _build_parser().parse_args()
+    curve = args.curve if args.curve is not None else FAN_CURVE_PRESETS[args.preset]
     controller = FanController(
         FanConfig(
             interval_s=args.interval,
             min_pwm=args.min_pwm,
             max_pwm=args.max_pwm,
             temp_control_auto=args.keep_kernel_auto,
-            curve=args.curve,
+            curve=curve,
         )
     )
 

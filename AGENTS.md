@@ -37,3 +37,7 @@ serial, and kiosk-style hardware integrations.
 - Keep implementation changes scoped and easy to inspect.
 - Do not overwrite user changes or generated calibration/configuration files.
 - Use Git history intentionally: make small commits only when requested.
+- Do not commit or push directly to `main`. When a commit and push is requested,
+  create a feature branch first, commit and push that branch, report the branch
+  and validation results, then wait for explicit approval before merging back to
+  `main`.
