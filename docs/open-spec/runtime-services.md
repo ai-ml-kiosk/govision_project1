@@ -38,18 +38,6 @@ Command:
 /usr/bin/python3 /home/jetson/workspace/GoVision_proj1/core/fan_control.py --interval 5
 ```
 
-### Planned `govision-lcd-touch.service`
-
-Status: not implemented yet.
-
-Expected purpose:
-
-- Drive the 2.4 inch 480x320 SPI LCD and touch controller for local preview and
-  controls.
-- Use SPI1 only: LCD on `/dev/spidev1.0`, touch on `/dev/spidev1.1`.
-- Avoid sharing the FLIR SPI0 bus.
-- Drop stale preview frames instead of queueing them.
-
 ## Installation
 
 Install Python dependencies:

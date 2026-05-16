@@ -2,8 +2,8 @@
 
 Status: Draft v0.1
 Scope: GoVision Jetson kiosk deployments with visible camera, thermal camera,
-OLED status display, planned SPI touch LCD, PWM fan control, Flask MJPEG
-streams, and hardware health monitoring.
+OLED status display, PWM fan control, Flask MJPEG streams, and hardware health
+monitoring.
 
 ## Goals
 
@@ -29,8 +29,6 @@ identifiers in the repository.
   streaming, orientation, resolution, and troubleshooting examples.
 - [FLIR Test Guide](../flir-testing.md): SPI auto-detect, still capture,
   live streaming, tuning, and troubleshooting examples.
-- [SPI Touch LCD Guide](../lcd-touch-display.md): planned 480x320 SPI LCD and
-  touch wiring, resource allocation, and performance expectations.
 - [Source Management](../source-management.md): feature-branch workflow and
   protected `main` guidance.
 
@@ -44,11 +42,6 @@ The current implementation uses:
 - `core/fan_control.py` for temperature-based PWM fan control.
 - `app.py` for Flask MJPEG routes.
 - `systemd/` for boot-time service templates.
-
-Planned additions:
-
-- A 2.4 inch 480x320 SPI touch LCD on SPI1, with LCD on `/dev/spidev1.0` and
-  touch on `/dev/spidev1.1`.
 
 ## Versioning Rules
 

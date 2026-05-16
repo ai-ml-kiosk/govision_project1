@@ -135,17 +135,19 @@ The test utilities use OpenCV `flipCode` values:
 none = no flip
 ```
 
+The standalone thermal viewer and FLIR test utilities default to flip code `-1`.
+
 Examples:
 
 ```bash
 python3 test/test_flir.py --flip-code none
-python3 test/test_video_flir.py --flip-code 0
+python3 test/test_video_flir.py --flip-code -1
 ```
 
 Environment variable:
 
 ```bash
-FLIR_FLIP_CODE=none python3 test/test_video_flir.py
+FLIR_FLIP_CODE=-1 python3 test/test_video_flir.py
 ```
 
 ## Sensitivity And Color Range
@@ -176,6 +178,46 @@ image:
 ```text
 HIGH xx.xC
 LOW xx.xC
+```
+
+The standalone thermal viewer supports display-only digital zoom steps:
+
+```text
+1.0x, 1.5x, 2.0x, 3.0x, 4.0x
+```
+
+Use the `-` and `+` zoom buttons on the control panel to zoom out or in. The
+hot and cold labels are calculated from the visible zoomed region.
+
+The standalone thermal viewer remembers rotation and zoom changes made with
+the control panel buttons:
+
+```bash
+python3 core/thermal_self.py
+```
+
+Saved settings default to:
+
+```text
+~/.config/govision/thermal_self.json
+```
+
+Override the starting rotation for one launch:
+
+```bash
+python3 core/thermal_self.py --rotation-degrees 90
+```
+
+Override the starting zoom for one launch:
+
+```bash
+python3 core/thermal_self.py --zoom-level 2.0
+```
+
+Disable persistence for a test run:
+
+```bash
+python3 core/thermal_self.py --no-save-settings
 ```
 
 ## Latency Tuning
@@ -268,6 +310,47 @@ from core.thermal import tlinear_to_celsius
 
 temps_c = tlinear_to_celsius(raw, scale=100.0)
 ```
+
+## Reset And Recovery
+
+The FLIR apps support two reset levels:
+
+- Soft reset: closes SPI, waits for VoSPI resync, and reopens on the next
+  capture. This needs no extra wiring.
+- Hardware reset: pulses an optional Jetson J41 physical pin wired to a FLIR
+  breakout `RESET`, `RST`, `EN`, or `PWR_EN` input. This is only enabled when
+  `FLIR_RESET_BOARD_PIN` or `--reset-board-pin` is set.
+
+One-shot reset before capture:
+
+```bash
+python3 test/test_flir.py --no-scan --bus 0 --device 0 --reset-before-capture
+```
+
+Reset without saving an image:
+
+```bash
+python3 test/test_flir.py --no-scan --bus 0 --device 0 --reset-only
+```
+
+With a wired reset pin, use the Jetson J41 physical pin number:
+
+```bash
+FLIR_RESET_BOARD_PIN=XX python3 test/test_flir.py --reset-only
+```
+
+The default hardware pulse is active-low. If the breakout reset input is
+active-high, add:
+
+```bash
+--reset-active-high
+```
+
+In the OpenCV viewers:
+
+- `core/fusion_self.py` has a `THM Reset` control-panel button.
+- `test/test_video_flir.py` accepts keyboard `r` in window mode.
+- `test/test_video_flir.py --http` exposes `/reset`.
 
 ## Troubleshooting
 

@@ -41,6 +41,17 @@ and local overrides.
 - `tlinear_scale`: Usually `100` when output is Kelvin times 100.
 - `flip_code`: OpenCV flip code for deployment orientation.
 
+### `[fusion_viewer]`
+
+- `thermal_offset_x`, `thermal_offset_y`: Display-pixel thermal overlay shift
+  for the active visible lens and deployment distance. The fusion self-viewer
+  can tune and persist these values with its thermal alignment arrow buttons.
+- `thermal_flip_code`: Fusion-specific thermal orientation. The current
+  close-mounted FLIR defaults to `none` because the module is physically rotated
+  180 degrees compared with the previous mount.
+- `visible_crop_width_ratio`, `visible_crop_height_ratio`: Visible-frame crop
+  used to approximate the Lepton field of view before overlay.
+
 ### `[oled]`
 
 - `enabled`: Boolean.
@@ -51,27 +62,6 @@ and local overrides.
 - `refresh_s`.
 - `show_power`: Boolean.
 - `show_ip`: Boolean.
-
-### `[lcd_touch_display]`
-
-- `enabled`: Boolean.
-- `type`: Generic display type such as `spi_tft_480x320_touch` until the
-  exact controller is confirmed.
-- `lcd_controller`: LCD controller name, for example `ili9488`, `st7796`, or
-  `unknown`.
-- `touch_controller`: Touch controller name, usually `xpt2046` or
-  `unknown`.
-- `spi_bus`: Shared SPI bus for the LCD and touch controller.
-- `lcd_spi_device`: SPI chip select device for the LCD, recommended `0` on
-  SPI1.
-- `touch_spi_device`: SPI chip select device for touch, recommended `1` on
-  SPI1.
-- `width`, `height`.
-- `rotation`: Display rotation used by the UI.
-- `dc_pin`, `reset_pin`, `backlight_pin`, `touch_irq_pin`: Jetson J41
-  physical pin numbers.
-- `target_fps`: Expected local preview frame rate.
-- `logic_voltage`: Expected GPIO/SPI logic voltage, normally `3.3V`.
 
 ### `[fan]`
 
@@ -86,7 +76,6 @@ and local overrides.
 
 - `flask_enabled`: Boolean.
 - `oled_enabled`: Boolean.
-- `lcd_touch_enabled`: Boolean.
 - `fan_control_enabled`: Boolean.
 - `install_user`: User that owns the project checkout.
 

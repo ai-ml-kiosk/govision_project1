@@ -32,6 +32,10 @@ class LeptonConfig:
     max_frame_attempts: int = 2
     max_sync_packets: int = 10_000
     resync_delay_s: float = 0.2
+    reset_board_pin: Optional[int] = None
+    reset_active_low: bool = True
+    reset_pulse_s: float = 0.2
+    reset_settle_s: float = 0.75
 
 
 @dataclass(frozen=True)
@@ -341,6 +345,25 @@ class FLIRLepton25:
             self._spi.close()
             self._spi = None
 
+    def reset(self, reopen: bool = True) -> None:
+        """Reset FLIR capture without unplugging the module.
+
+        With ``reset_board_pin`` configured, this pulses a Jetson BOARD pin
+        connected to the Lepton breakout reset/enable line. Otherwise it
+        performs a soft reset by closing SPI and waiting long enough for VoSPI
+        chip-select resync before optionally reopening the device.
+        """
+
+        self.release()
+        if self.config.reset_board_pin is not None:
+            self._pulse_reset_gpio()
+        else:
+            time.sleep(max(self.config.resync_delay_s, self.config.reset_settle_s))
+
+        if reopen:
+            self.open()
+            self._resync()
+
     def _read_packet(self) -> bytes:
         assert self._spi is not None
 
@@ -370,6 +393,34 @@ class FLIRLepton25:
 
     def _resync(self) -> None:
         time.sleep(self.config.resync_delay_s)
+
+    def _pulse_reset_gpio(self) -> None:
+        pin = self.config.reset_board_pin
+        if pin is None:
+            return
+
+        try:
+            import Jetson.GPIO as GPIO
+        except ImportError as exc:
+            raise ThermalError(
+                "Jetson.GPIO is required for FLIR hardware reset. Install it or "
+                "unset FLIR_RESET_BOARD_PIN to use soft SPI reset only."
+            ) from exc
+
+        active_level = GPIO.LOW if self.config.reset_active_low else GPIO.HIGH
+        inactive_level = GPIO.HIGH if self.config.reset_active_low else GPIO.LOW
+
+        try:
+            GPIO.setwarnings(False)
+            GPIO.setmode(GPIO.BOARD)
+            GPIO.setup(pin, GPIO.OUT, initial=inactive_level)
+            time.sleep(0.02)
+            GPIO.output(pin, active_level)
+            time.sleep(max(0.0, self.config.reset_pulse_s))
+            GPIO.output(pin, inactive_level)
+            time.sleep(max(0.0, self.config.reset_settle_s))
+        except Exception as exc:
+            raise ThermalError(f"Unable to pulse FLIR reset GPIO BOARD pin {pin}.") from exc
 
     def __enter__(self) -> "FLIRLepton25":
         self.open()

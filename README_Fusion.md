@@ -1,13 +1,13 @@
-# Sensor Fusion Specification: Vertical Stack
+# Sensor Fusion Specification: Close-Mounted CSI And Thermal Stack
 
 Status: Draft implementation plan
 
 ## 1. Hardware Geometry
 
-- **Primary (Visible):** IMX219-83 CSI camera in the lower position.
-- **Secondary (Thermal):** FLIR Lepton 2.5 in the upper position.
-- **Orientation:** Vertical stack, with the optical axes intended to be roughly parallel.
-- **Physical Offset:** The FLIR is mounted above the midpoint of the twin-lens CSI module with about a 35mm vertical baseline. Final alignment must still be tuned in software because parallax changes with subject distance.
+- **Primary (Visible):** IMX219-83 CSI camera from the twin-lens CSI module.
+- **Secondary (Thermal):** FLIR Lepton 2.5 close-mounted near the twin-lens CSI module.
+- **Orientation:** Optical axes are intended to be roughly parallel. The FLIR module is physically rotated 180 degrees compared with the previous mount.
+- **Physical Offset:** The twin CSI lenses are separated by about 55mm. The FLIR is mounted near the middle of the twin-lens module, so it is about 27.5mm horizontally from either CSI lens and about 8mm below the CSI lens centerline. Final alignment must still be tuned in software because parallax changes with subject distance.
 
 ## 2. Feasibility Summary
 
@@ -37,7 +37,10 @@ Initial crop estimates for the fusion self-viewer:
 
 - Visible crop width ratio: start around `0.64`, based on 50° thermal horizontal FoV over 73° visible horizontal FoV.
 - Visible crop height ratio: start at `1.0` for the 480x320 self-viewer surface, then tune using calibration captures.
-- Thermal y offset: start around `-24` display pixels because the FLIR is above the CSI center; negative y shifts the thermal overlay up.
+- Thermal x offset: start around `+19` display pixels if the active visible lens is left of the FLIR; use about `-19` if the active visible lens is right of the FLIR.
+- Thermal y offset: start around `-4` display pixels after live alignment showed the first `+6` and `0` estimates placed the thermal overlay slightly low. Positive y shifts the thermal overlay down; negative y shifts it up.
+- Thermal orientation: start with `thermal_flip_code=none` for the fusion viewer because the FLIR module has been physically rotated 180 degrees compared with the previous mount.
+- Fusion self-viewer alignment controls: use the thermal `ALIGN` arrow buttons to nudge the overlay by 2 display pixels per click. The chosen `thermal_offset_x` and `thermal_offset_y` values are saved in the fusion viewer settings file so the next launch starts from the same alignment.
 - Offset controls: expose at least `x_offset_px` and `y_offset_px` because physical mounting and working distance dominate the final alignment.
 
 These numbers are only starting points. The saved calibration should be the source of truth for each device.
@@ -166,7 +169,7 @@ Acceptance target:
 - **Depth-dependent parallax:** Calibrate for the main kiosk distance and document expected drift.
 - **Thermal frame rate:** Run fusion at thermal speed and reuse the latest visible frame.
 - **Color flicker:** Avoid per-frame min/max for operator-facing views.
-- **Orientation mismatch:** Keep `flip_method`, `flip_code`, and offsets configurable.
+- **Orientation mismatch:** Keep `flip_method`, `thermal_flip_code`, and offsets configurable. With the current close-mounted hardware, the standalone fusion viewer defaults its thermal layer to `FUSION_THERMAL_FLIP_CODE=none` because the FLIR module is physically rotated 180 degrees compared with the previous mount; override with `FUSION_THERMAL_FLIP_CODE` or `--thermal-flip-code` only for fusion-specific mounting differences.
 - **Temperature threshold accuracy:** Treat thresholds as operational heuristics unless calibrated against a known reference.
 - **CPU load:** Prefer simple OpenCV operations first; optimize only after measuring on the Jetson.
 
