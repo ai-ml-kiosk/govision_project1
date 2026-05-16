@@ -2,7 +2,7 @@ from pathlib import Path
 import argparse
 import os
 import sys
-from typing import Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 import cv2
 
@@ -25,6 +25,18 @@ def env_int(name: str, default: int) -> int:
 
 def env_float(name: str, default: float) -> float:
     return float(os.getenv(name, str(default)))
+
+
+def env_optional_int(name: str) -> Optional[int]:
+    value = os.getenv(name)
+    return None if value is None else int(value)
+
+
+def env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
 
 
 def print_probe_results(probes: Iterable[SpiProbeResult]) -> None:
@@ -58,10 +70,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--output-scale", type=int, default=env_int("FLIR_OUTPUT_SCALE", 8))
     parser.add_argument("--tlinear-scale", type=float, default=env_float("FLIR_TLINEAR_SCALE", 100.0))
-    parser.add_argument("--flip-code", default=os.getenv("FLIR_FLIP_CODE", "0"))
+    parser.add_argument("--flip-code", default=os.getenv("FLIR_FLIP_CODE", "-1"))
     parser.add_argument("--max-frame-attempts", type=int, default=env_int("FLIR_MAX_FRAME_ATTEMPTS", 8))
     parser.add_argument("--max-sync-packets", type=int, default=env_int("FLIR_MAX_SYNC_PACKETS", 20_000))
     parser.add_argument("--resync-delay-s", type=float, default=env_float("FLIR_RESYNC_DELAY_S", 0.2))
+    parser.add_argument(
+        "--reset-before-capture",
+        action="store_true",
+        default=env_bool("FLIR_RESET_BEFORE_CAPTURE", False),
+        help="Reset FLIR capture before reading a frame",
+    )
+    parser.add_argument(
+        "--reset-only",
+        action="store_true",
+        help="Reset FLIR capture and exit without saving an image",
+    )
+    parser.add_argument(
+        "--reset-board-pin",
+        type=int,
+        default=env_optional_int("FLIR_RESET_BOARD_PIN"),
+        help="Optional Jetson J41 physical pin wired to FLIR reset/enable",
+    )
+    parser.add_argument(
+        "--reset-active-high",
+        action="store_true",
+        default=env_bool("FLIR_RESET_ACTIVE_HIGH", False),
+        help="Use active-high reset pulse instead of the default active-low pulse",
+    )
+    parser.add_argument("--reset-pulse-s", type=float, default=env_float("FLIR_RESET_PULSE_S", 0.2))
+    parser.add_argument("--reset-settle-s", type=float, default=env_float("FLIR_RESET_SETTLE_S", 0.75))
     parser.add_argument(
         "--output",
         default=str(Path(__file__).resolve().parents[1] / "results" / "test_flir.jpg"),
@@ -142,12 +179,26 @@ def main() -> int:
         max_frame_attempts=args.max_frame_attempts,
         max_sync_packets=args.max_sync_packets,
         resync_delay_s=args.resync_delay_s,
+        reset_board_pin=args.reset_board_pin,
+        reset_active_low=not args.reset_active_high,
+        reset_pulse_s=args.reset_pulse_s,
+        reset_settle_s=args.reset_settle_s,
     )
     flir = FLIRLepton25(base_config)
     output_path = Path(args.output)
     output_path.parent.mkdir(exist_ok=True)
 
     try:
+        if args.reset_only:
+            flir.reset(reopen=False)
+            print(
+                f"Reset FLIR capture for spidev{base_config.spi_bus}.{base_config.spi_device}"
+            )
+            return 0
+
+        if args.reset_before_capture:
+            flir.reset(reopen=False)
+
         raw = flir.get_raw_frame()
         flip_code = str(args.flip_code).strip().lower()
         if flip_code not in ("", "none"):

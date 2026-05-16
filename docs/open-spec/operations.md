@@ -64,24 +64,7 @@ Expected address:
 python3 core/fan_control.py --status
 ```
 
-7. Confirm planned SPI LCD/touch resources, if the 2.4 inch display is
-   installed or about to be installed.
-
-```bash
-ls -l /sys/class/spidev
-```
-
-Expected entries for the planned LCD/touch wiring:
-
-```text
-spidev1.0
-spidev1.1
-```
-
-The recommended allocation is LCD on `/dev/spidev1.0` and touch on
-`/dev/spidev1.1`, leaving FLIR on `/dev/spidev0.0`.
-
-8. Confirm Flask imports and routes.
+7. Confirm Flask imports and routes.
 
 ```bash
 python3 -c "from app import app; print(app.url_map)"
@@ -131,8 +114,7 @@ test/lepton_success.jpg
 ## Deployment Notes
 
 - Record all bus numbers and addresses in a deployment profile.
-- Record J41 physical pin numbers for any GPIO-backed controls such as LCD
-  DC/RS, reset, backlight, and touch IRQ.
+- Record J41 physical pin numbers for any GPIO-backed controls.
 - Install `systemd/modules-load.d/govision-spidev.conf` to
   `/etc/modules-load.d/` so `spidev` loads automatically after reboot.
 - Record any camera orientation flips.

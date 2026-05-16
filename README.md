@@ -3,7 +3,7 @@
 GoVision is a Jetson Nano vision and kiosk hardware project. It combines CSI
 visible camera capture, FLIR Lepton thermal capture, visible/thermal fusion
 experiments, a local OLED status display, PWM fan control, desktop viewers,
-Flask MJPEG streams, and planned local touchscreen controls.
+and Flask MJPEG streams.
 
 The project is designed for live NVIDIA Jetson hardware. Camera, SPI, I2C,
 thermal, display, fan, and GPIO paths should be inspected before changing
@@ -17,7 +17,6 @@ of source control.
 | IMX219 visible camera | CSI | `nvarguscamerasrc`, usually `sensor-id=0` |
 | FLIR Lepton 2.5 | SPI0 plus I2C0 | `/dev/spidev0.0`, I2C `0x2A` |
 | Mini OLED 128x64 | I2C1 | `/dev/i2c-1`, address `0x3C` |
-| 2.4 inch SPI touch LCD | SPI1 plus GPIO | Planned LCD `/dev/spidev1.0`, touch `/dev/spidev1.1` |
 | Jetson fan | pwm-fan sysfs | `/sys/devices/pwm-fan` |
 
 All J41 GPIO, SPI, I2C, and PWM wiring must use 3.3V logic. Do not connect 5V
@@ -60,8 +59,7 @@ logic to Jetson GPIO pins.
 - [Open Spec](docs/open-spec/README.md): project goals, implementation
   baseline, and spec index.
 - [Hardware Interfaces](docs/open-spec/hardware-interfaces.md): Jetson Nano bus
-  allocation and J41 pin wiring for the camera stack, FLIR, OLED, fan, and
-  planned LCD/touch display.
+  allocation and J41 pin wiring for the camera stack, FLIR, OLED, and fan.
 - [Device Profile](docs/open-spec/device-profile.md): expected per-device
   configuration fields.
 - [Deployment Profile Example](docs/open-spec/deployment-profile.example.toml):
@@ -76,8 +74,6 @@ logic to Jetson GPIO pins.
   live viewing, orientation, resolution, and latency tuning.
 - [FLIR Test Guide](docs/flir-testing.md): FLIR SPI auto-detect, still capture,
   live viewing, sensitivity tuning, and troubleshooting.
-- [SPI Touch LCD Guide](docs/lcd-touch-display.md): planned 480x320 SPI LCD
-  wiring, performance expectations, and driver details to confirm.
 - [Fusion Plan](README_Fusion.md): visible and thermal sensor-fusion
   feasibility, calibration, implementation, and validation plan.
 - [Source Management](docs/source-management.md): required branch workflow,

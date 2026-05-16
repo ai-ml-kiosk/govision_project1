@@ -30,6 +30,18 @@ def env_float(name: str, default: float) -> float:
     return float(os.getenv(name, str(default)))
 
 
+def env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def env_optional_int(name: str) -> Optional[int]:
+    value = os.getenv(name)
+    return None if value is None else int(value)
+
+
 def env_optional_float(name: str) -> Optional[float]:
     value = os.getenv(name)
     return None if value is None else float(value)
@@ -46,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--port", type=int, default=env_int("FLIR_STREAM_PORT", 5001))
     parser.add_argument("--window-name", default="GoVision FLIR")
     parser.add_argument("--scale", type=int, default=env_int("FLIR_OUTPUT_SCALE", 8))
-    parser.add_argument("--flip-code", default=os.getenv("FLIR_FLIP_CODE", "0"))
+    parser.add_argument("--flip-code", default=os.getenv("FLIR_FLIP_CODE", "-1"))
     parser.add_argument("--min-c", type=float, default=env_optional_float("FLIR_MIN_C"))
     parser.add_argument("--max-c", type=float, default=env_optional_float("FLIR_MAX_C"))
     parser.add_argument("--auto-low-percentile", type=float, default=env_float("FLIR_LOW_PCT", 2.0))
@@ -72,6 +84,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-sync-packets", type=int, default=env_int("FLIR_MAX_SYNC_PACKETS", 6_000))
     parser.add_argument("--resync-delay-s", type=float, default=env_float("FLIR_RESYNC_DELAY_S", 0.0))
     parser.add_argument("--error-sleep-s", type=float, default=env_float("FLIR_ERROR_SLEEP_S", 0.1))
+    parser.add_argument(
+        "--reset-on-error",
+        action="store_true",
+        default=env_bool("FLIR_RESET_ON_ERROR", False),
+        help="Pulse configured reset pin, or soft-reset SPI, after capture errors",
+    )
+    parser.add_argument(
+        "--reset-board-pin",
+        type=int,
+        default=env_optional_int("FLIR_RESET_BOARD_PIN"),
+        help="Optional Jetson J41 physical pin wired to FLIR reset/enable",
+    )
+    parser.add_argument(
+        "--reset-active-high",
+        action="store_true",
+        default=env_bool("FLIR_RESET_ACTIVE_HIGH", False),
+        help="Use active-high reset pulse instead of the default active-low pulse",
+    )
+    parser.add_argument("--reset-pulse-s", type=float, default=env_float("FLIR_RESET_PULSE_S", 0.2))
+    parser.add_argument("--reset-settle-s", type=float, default=env_float("FLIR_RESET_SETTLE_S", 0.75))
     parser.add_argument("--jpeg-quality", type=int, default=85)
     return parser
 
@@ -88,6 +120,10 @@ def build_config(args: argparse.Namespace) -> LeptonConfig:
         max_frame_attempts=args.max_frame_attempts,
         max_sync_packets=args.max_sync_packets,
         resync_delay_s=args.resync_delay_s,
+        reset_board_pin=args.reset_board_pin,
+        reset_active_low=not args.reset_active_high,
+        reset_pulse_s=args.reset_pulse_s,
+        reset_settle_s=args.reset_settle_s,
     )
 
     if args.no_auto_detect or forced_spi or env_forced_spi:
@@ -222,12 +258,21 @@ def mjpeg_chunk(frame: np.ndarray, quality: int) -> bytes:
     return b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + encode_jpeg(frame, quality) + b"\r\n"
 
 
-def frame_loop(flir: FLIRLepton25, args: argparse.Namespace):
+def reset_flir(flir: FLIRLepton25, reopen: bool = False) -> None:
+    flir.reset(reopen=reopen)
+    print("Reset FLIR capture", flush=True)
+
+
+def frame_loop(flir: FLIRLepton25, args: argparse.Namespace, lock=None):
     last_time = time.monotonic()
     fps = 0.0
     while True:
         try:
-            raw = flir.get_raw_frame()
+            if lock is None:
+                raw = flir.get_raw_frame()
+            else:
+                with lock:
+                    raw = flir.get_raw_frame()
             now = time.monotonic()
             elapsed = now - last_time
             last_time = now
@@ -235,7 +280,17 @@ def frame_loop(flir: FLIRLepton25, args: argparse.Namespace):
                 fps = 0.8 * fps + 0.2 * (1.0 / elapsed) if fps > 0 else 1.0 / elapsed
             yield render_frame(raw, args, fps=fps)
         except (ThermalError, RuntimeError) as exc:
-            flir.release()
+            if lock is None:
+                if args.reset_on_error:
+                    reset_flir(flir, reopen=False)
+                else:
+                    flir.release()
+            else:
+                with lock:
+                    if args.reset_on_error:
+                        reset_flir(flir, reopen=False)
+                    else:
+                        flir.release()
             yield error_frame(str(exc))
             time.sleep(args.error_sleep_s)
 
@@ -247,6 +302,8 @@ def run_window(flir: FLIRLepton25, args: argparse.Namespace) -> None:
             key = cv2.waitKey(1) & 0xFF
             if key in (ord("q"), 27):
                 break
+            if key == ord("r"):
+                reset_flir(flir, reopen=False)
     finally:
         flir.release()
         cv2.destroyAllWindows()
@@ -254,17 +311,22 @@ def run_window(flir: FLIRLepton25, args: argparse.Namespace) -> None:
 
 def run_http(flir: FLIRLepton25, args: argparse.Namespace) -> None:
     from flask import Flask, Response, stream_with_context
+    from threading import Lock
 
     app = Flask(__name__)
+    flir_lock = Lock()
 
     @app.get("/")
     def index():
-        return '<img src="/thermal_feed" style="image-rendering: pixelated; max-width: 100%;">'
+        return (
+            '<form action="/reset" method="post"><button type="submit">Reset FLIR</button></form>'
+            '<img src="/thermal_feed" style="image-rendering: pixelated; max-width: 100%;">'
+        )
 
     @app.get("/thermal_feed")
     def thermal_feed():
         def generate():
-            for frame in frame_loop(flir, args):
+            for frame in frame_loop(flir, args, flir_lock):
                 yield mjpeg_chunk(frame, args.jpeg_quality)
 
         response = Response(stream_with_context(generate()), content_type=MJPEG_MIMETYPE)
@@ -272,6 +334,12 @@ def run_http(flir: FLIRLepton25, args: argparse.Namespace) -> None:
         response.headers["Pragma"] = "no-cache"
         response.headers["X-Accel-Buffering"] = "no"
         return response
+
+    @app.route("/reset", methods=["GET", "POST"])
+    def reset_route():
+        with flir_lock:
+            reset_flir(flir, reopen=False)
+        return "FLIR reset requested\n", 200, {"Content-Type": "text/plain"}
 
     try:
         print(f"Serving FLIR stream at http://{args.host}:{args.port}/")
