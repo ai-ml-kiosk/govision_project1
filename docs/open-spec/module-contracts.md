@@ -84,9 +84,13 @@ Contract:
 - Voltage/current/power display should show `--` when sysfs readings are not
   available or not readable.
 - Load should be displayed as 1-minute load normalized by CPU count, not raw
-  load average.
-- Fan RPM is read best-effort from `/sys/devices/pwm-fan/rpm_measured` and
-  shown as `--` when unavailable.
+  load average, in the power row where uptime would otherwise appear.
+- Uptime should be displayed on the final full-width row before the Health
+  field.
+- Network IO is sampled best-effort from `/proc/net/dev` and shown on its own
+  full-width row immediately before the Health row as compact
+  receive/transmit bytes-per-second, such as `Net D: 0K U: 2K`.
+  It should show `--` when unavailable.
 - Status rows below the IP line should use compact two-column formatting with
   field labels ending in `:`.
 

@@ -31,7 +31,7 @@ logic to Jetson GPIO pins.
 - Live visible and thermal viewers with local OpenCV windows or MJPEG browser
   streams.
 - Flask MJPEG routes for visible and thermal feeds.
-- SSD1306 mini OLED health display for IP, temperature, load, fan RPM, memory,
+- SSD1306 mini OLED health display for IP, temperature, load, network IO, memory,
   disk, power, uptime, and warnings.
 - Quiet temperature-based Jetson PWM fan controller.
 - systemd service templates for OLED, fan control, and boot-time SPI module
