@@ -30,7 +30,7 @@ from core.thermal import (  # noqa: E402
 
 DEFAULT_WINDOW_WIDTH = 480
 DEFAULT_WINDOW_HEIGHT = 320
-DEFAULT_WINDOW_NAME = "GoVision Fusion Self"
+DEFAULT_WINDOW_NAME = "GoVision Fusion UI"
 DEFAULT_PANEL_WIDTH = 128
 DEFAULT_VIEW_WIDTH = DEFAULT_WINDOW_WIDTH - DEFAULT_PANEL_WIDTH
 DEFAULT_VIEW_HEIGHT = DEFAULT_WINDOW_HEIGHT
@@ -46,7 +46,8 @@ DEFAULT_THERMAL_OFFSET_Y = -4
 DEFAULT_THERMAL_FLIP_CODE = "none"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RESULTS_DIR = PROJECT_ROOT / "results"
-DEFAULT_SETTINGS_PATH = Path("~/.config/govision/fusion_self.json")
+DEFAULT_SETTINGS_PATH = Path("~/.config/govision/fusion_ui.json")
+LEGACY_SETTINGS_PATH = Path("~/.config/govision/fusion_self.json")
 ZOOM_LEVELS = (1.0, 1.5, 2.0, 3.0, 4.0)
 THERMAL_OFFSET_NUDGE_PIXELS = 2
 
@@ -146,7 +147,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--settings-file",
-        default=os.getenv("FUSION_SELF_SETTINGS_FILE", str(DEFAULT_SETTINGS_PATH)),
+        default=os.getenv(
+            "FUSION_UI_SETTINGS_FILE",
+            os.getenv("FUSION_SELF_SETTINGS_FILE", str(DEFAULT_SETTINGS_PATH)),
+        ),
         help="JSON file used to remember viewer settings",
     )
     parser.add_argument(
@@ -358,11 +362,18 @@ def settings_path(args: argparse.Namespace) -> Path:
     return Path(args.settings_file).expanduser()
 
 
+def legacy_settings_path(args: argparse.Namespace) -> Optional[Path]:
+    if Path(args.settings_file) != DEFAULT_SETTINGS_PATH:
+        return None
+    path = LEGACY_SETTINGS_PATH.expanduser()
+    return path if path.exists() else None
+
+
 def load_viewer_settings(args: argparse.Namespace) -> Dict[str, float]:
     if args.no_save_settings:
         return {}
 
-    path = settings_path(args)
+    path = legacy_settings_path(args) or settings_path(args)
     try:
         with path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)

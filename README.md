@@ -45,7 +45,7 @@ logic to Jetson GPIO pins.
   frame conversion helpers.
 - [core/mini_oled.py](core/mini_oled.py): mini OLED health display renderer.
 - [core/fan_control.py](core/fan_control.py): Jetson PWM fan controller.
-- `core/camera_self.py`, `core/thermal_self.py`, `core/fusion_self.py`:
+- `ui/camera_ui.py`, `ui/thermal_ui.py`, `ui/fusion_ui.py`:
   desktop-launched local viewers with capture controls.
 - [test/](test): hardware test and live-view utilities.
 - [systemd/](systemd): service templates and module-load configuration.
@@ -74,6 +74,8 @@ logic to Jetson GPIO pins.
   live viewing, orientation, resolution, and latency tuning.
 - [FLIR Test Guide](docs/flir-testing.md): FLIR SPI auto-detect, still capture,
   live viewing, sensitivity tuning, and troubleshooting.
+- [UI Viewer Reference](docs/ui-viewers.md): SVG runtime-layout references for
+  the local camera, thermal, and fusion viewer applications.
 - [Fusion Plan](README_Fusion.md): visible and thermal sensor-fusion
   feasibility, calibration, implementation, and validation plan.
 - [Source Management](docs/source-management.md): required branch workflow,

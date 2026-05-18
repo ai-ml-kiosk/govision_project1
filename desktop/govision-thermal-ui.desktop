@@ -1,9 +1,11 @@
 [Desktop Entry]
+Version=1.0
 Type=Application
 Name=GoVision Thermal Viewer
 Comment=Open the 480x320 FLIR Lepton thermal viewer with controls
 Path=/home/jetson/workspace/GoVision_proj1
-Exec=/home/jetson/workspace/GoVision_proj1/desktop/launch-thermal-self.sh
+Exec=/home/jetson/workspace/GoVision_proj1/desktop/launch-thermal-ui.sh
+Icon=/home/jetson/workspace/GoVision_proj1/assets/icons/govision-thermal.svg
 Terminal=false
 StartupNotify=false
 Categories=Utility;

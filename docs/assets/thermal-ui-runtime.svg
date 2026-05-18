@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" role="img" aria-labelledby="title desc">
+  <title id="title">GoVision Thermal UI runtime reference</title>
+  <desc id="desc">Static SVG reference of the FLIR thermal viewer runtime layout with thermal image and right control panel.</desc>
+  <defs>
+    <radialGradient id="heat" cx="55%" cy="48%" r="62%">
+      <stop offset="0%" stop-color="#fff7ad"/>
+      <stop offset="22%" stop-color="#facc15"/>
+      <stop offset="44%" stop-color="#ef4444"/>
+      <stop offset="67%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+  </defs>
+  <rect width="480" height="320" fill="#05070a"/>
+  <rect x="0" y="0" width="352" height="320" fill="url(#heat)"/>
+  <g opacity="0.45">
+    <rect x="40" y="38" width="48" height="42" fill="#1d4ed8"/>
+    <rect x="102" y="82" width="72" height="58" fill="#7c3aed"/>
+    <rect x="210" y="52" width="82" height="78" fill="#ef4444"/>
+    <rect x="70" y="178" width="90" height="88" fill="#0f766e"/>
+    <rect x="218" y="188" width="72" height="60" fill="#f97316"/>
+  </g>
+  <circle cx="246" cy="89" r="10" fill="none" stroke="#ff0000" stroke-width="3"/>
+  <circle cx="64" cy="58" r="10" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <text x="12" y="24" fill="#ffffff" font-family="monospace" font-size="15">FLIR 80x60</text>
+  <text x="12" y="286" fill="#ffffff" font-family="monospace" font-size="15">HIGH 36.5C</text>
+  <text x="12" y="308" fill="#ffffff" font-family="monospace" font-size="15">LOW 24.1C</text>
+  <rect x="352" y="0" width="128" height="320" fill="#1f1f1f"/>
+  <line x1="352" y1="0" x2="352" y2="320" stroke="#4b5563"/>
+  <text x="362" y="22" fill="#f8fafc" font-family="monospace" font-size="17">THERMAL</text>
+  <text x="362" y="44" fill="#86efac" font-family="monospace" font-size="13">LIVE</text>
+  <text x="362" y="61" fill="#e5e7eb" font-family="monospace" font-size="13">FPS 8.6</text>
+  <line x1="362" y1="74" x2="470" y2="74" stroke="#525252"/>
+  <rect x="362" y="96" width="108" height="28" fill="#503636" stroke="#be7070"/>
+  <text x="382" y="115" fill="#ffffff" font-family="monospace" font-size="13">THM Off</text>
+  <text x="362" y="151" fill="#a3a3a3" font-family="monospace" font-size="12">VIEW</text>
+  <text x="362" y="166" fill="#e5e7eb" font-family="monospace" font-size="12">Rot 360</text>
+  <rect x="362" y="170" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="378" y="187" fill="#ffffff" font-family="monospace" font-size="13">R&lt;</text>
+  <rect x="419" y="170" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="435" y="187" fill="#ffffff" font-family="monospace" font-size="13">R&gt;</text>
+  <text x="362" y="207" fill="#e5e7eb" font-family="monospace" font-size="12">Zoom 1.0x</text>
+  <rect x="362" y="211" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="378" y="228" fill="#ffffff" font-family="monospace" font-size="13">Z-</text>
+  <rect x="419" y="211" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="435" y="228" fill="#ffffff" font-family="monospace" font-size="13">Z+</text>
+  <rect x="362" y="286" width="51" height="24" fill="#376048" stroke="#70c484"/>
+  <text x="366" y="303" fill="#ffffff" font-family="monospace" font-size="12">Capture</text>
+  <rect x="419" y="286" width="51" height="24" fill="#503636" stroke="#be7070"/>
+  <text x="432" y="303" fill="#ffffff" font-family="monospace" font-size="12">Exit</text>
+</svg>
