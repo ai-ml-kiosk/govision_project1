@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PROJECT_DIR="/home/jetson/workspace/GoVision_proj1"
-LOG_FILE="$PROJECT_DIR/results/camera_self.log"
+LOG_FILE="$PROJECT_DIR/results/camera_ui.log"
 
 mkdir -p "$PROJECT_DIR/results"
 
@@ -16,7 +16,7 @@ mkdir -p "$PROJECT_DIR/results"
     export CAMERA_DISPLAY_WIDTH="${CAMERA_DISPLAY_WIDTH:-352}"
     export CAMERA_DISPLAY_HEIGHT="${CAMERA_DISPLAY_HEIGHT:-320}"
     export CAMERA_FRAMERATE="${CAMERA_FRAMERATE:-30}"
-    /usr/bin/python3 "$PROJECT_DIR/core/camera_self.py"
+    /usr/bin/python3 "$PROJECT_DIR/ui/camera_ui.py"
     status=$?
     echo "Exit status: $status"
     exit "$status"

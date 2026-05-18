@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PROJECT_DIR="/home/jetson/workspace/GoVision_proj1"
-LOG_FILE="$PROJECT_DIR/results/fusion_self.log"
+LOG_FILE="$PROJECT_DIR/results/fusion_ui.log"
 
 mkdir -p "$PROJECT_DIR/results"
 
@@ -21,7 +21,7 @@ mkdir -p "$PROJECT_DIR/results"
     export FUSION_THERMAL_OFFSET_X="${FUSION_THERMAL_OFFSET_X:-19}"
     export FUSION_THERMAL_OFFSET_Y="${FUSION_THERMAL_OFFSET_Y:--4}"
     export FUSION_THERMAL_FLIP_CODE="${FUSION_THERMAL_FLIP_CODE:-none}"
-    /usr/bin/python3 "$PROJECT_DIR/core/fusion_self.py"
+    /usr/bin/python3 "$PROJECT_DIR/ui/fusion_ui.py"
     status=$?
     echo "Exit status: $status"
     exit "$status"

@@ -21,6 +21,7 @@ Use 3.3V I2C logic. Only use 5V VCC if the OLED breakout explicitly supports it.
 """
 
 PWM_FAN_DIR = "/sys/devices/pwm-fan"
+_NETWORK_SAMPLE: Optional[Tuple[float, int, int]] = None
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,8 @@ class DeviceHealth:
     cpu_count: int = 1
     load_percent: float = 0.0
     fan_rpm: Optional[int] = None
+    network_rx_bps: Optional[float] = None
+    network_tx_bps: Optional[float] = None
 
 
 class OLEDDisplayError(RuntimeError):
@@ -184,8 +187,107 @@ def _normalized_load_percent(load_1m: float, cpu_count: int) -> float:
     return max(0.0, (load_1m / max(1, cpu_count)) * 100.0)
 
 
+def _network_unit_scale(rx_bps: Optional[float], tx_bps: Optional[float]) -> Tuple[float, str]:
+    value = max(0.0, rx_bps or 0.0, tx_bps or 0.0)
+    units = ("B", "K", "M", "G")
+    scale = 1.0
+    unit = units[0]
+    for unit in units:
+        if value < 1024.0 or unit == units[-1]:
+            break
+        value /= 1024.0
+        scale *= 1024.0
+    return scale, unit
+
+
+def _format_network_io(rx_bps: Optional[float], tx_bps: Optional[float]) -> str:
+    if rx_bps is None and tx_bps is None:
+        return "Net:--"
+
+    scale, unit = _network_unit_scale(rx_bps, tx_bps)
+    rx_value = int(round(max(0.0, rx_bps or 0.0) / scale))
+    tx_value = int(round(max(0.0, tx_bps or 0.0) / scale))
+    return f"Net D: {rx_value}{unit} U: {tx_value}{unit}"
+
+
 def _fan_rpm(fan_dir: str = PWM_FAN_DIR) -> Optional[int]:
     return _read_int(os.path.join(fan_dir, "rpm_measured"))
+
+
+def _default_network_interface() -> Optional[str]:
+    try:
+        with open("/proc/net/route", "r", encoding="utf-8") as handle:
+            next(handle, None)
+            for line in handle:
+                parts = line.split()
+                if len(parts) >= 2 and parts[1] == "00000000":
+                    return parts[0]
+    except OSError:
+        return None
+    return None
+
+
+def _network_totals(interface: Optional[str] = None) -> Optional[Tuple[int, int]]:
+    try:
+        with open("/proc/net/dev", "r", encoding="utf-8") as handle:
+            lines = handle.readlines()[2:]
+    except OSError:
+        return None
+
+    rx_total = 0
+    tx_total = 0
+    matched = False
+    for line in lines:
+        if ":" not in line:
+            continue
+        name, values = line.split(":", 1)
+        name = name.strip()
+        if name == "lo":
+            continue
+        if interface is not None and name != interface:
+            continue
+
+        fields = values.split()
+        if len(fields) < 16:
+            continue
+        try:
+            rx_bytes = int(fields[0])
+            tx_bytes = int(fields[8])
+        except ValueError:
+            continue
+
+        rx_total += rx_bytes
+        tx_total += tx_bytes
+        matched = True
+
+    if matched:
+        return rx_total, tx_total
+
+    if interface is not None:
+        return _network_totals(None)
+    return None
+
+
+def _network_io_bps() -> Tuple[Optional[float], Optional[float]]:
+    global _NETWORK_SAMPLE
+
+    totals = _network_totals(_default_network_interface())
+    if totals is None:
+        return None, None
+
+    now = time.monotonic()
+    rx_bytes, tx_bytes = totals
+    previous = _NETWORK_SAMPLE
+    _NETWORK_SAMPLE = (now, rx_bytes, tx_bytes)
+
+    if previous is None:
+        return 0.0, 0.0
+
+    previous_time, previous_rx, previous_tx = previous
+    elapsed = max(0.001, now - previous_time)
+    rx_bps = max(0.0, (rx_bytes - previous_rx) / elapsed)
+    tx_bps = max(0.0, (tx_bytes - previous_tx) / elapsed)
+    return rx_bps, tx_bps
 
 
 def _thermal_zone_temps() -> Dict[str, float]:
@@ -261,6 +363,7 @@ def collect_device_health(timezone: Optional[str] = None) -> DeviceHealth:
     disk_pct = _disk_percent("/")
     voltage, current, power = _power_metrics()
     fan_rpm = _fan_rpm()
+    network_rx_bps, network_tx_bps = _network_io_bps()
 
     warnings: List[str] = []
     if cpu_temp is not None and cpu_temp >= 75.0:
@@ -294,6 +397,8 @@ def collect_device_health(timezone: Optional[str] = None) -> DeviceHealth:
         cpu_count=cpu_count,
         load_percent=load_percent,
         fan_rpm=fan_rpm,
+        network_rx_bps=network_rx_bps,
+        network_tx_bps=network_tx_bps,
     )
 
 
@@ -394,21 +499,22 @@ class MiniOLED:
         if load_percent == 0.0 and health.load_1m > 0.0:
             load_percent = _normalized_load_percent(health.load_1m, health.cpu_count)
         load = f"{load_percent:.0f}%"
-        rpm = "--" if health.fan_rpm is None else str(health.fan_rpm)
+        net_io = self._fit(_format_network_io(health.network_rx_bps, health.network_tx_bps))
         voltage = "--" if health.voltage_v is None else f"{health.voltage_v:.2f}V"
         current = "--" if health.current_a is None else f"{health.current_a:.2f}A"
         power = "--" if health.power_watts is None else f"{health.power_watts:.1f}W"
         status = "OK" if not health.warnings else ",".join(health.warnings)
+        up_health = self._fit(f"Up: {health.uptime} Health: {status}")
 
         return [
             health.timestamp,
             f"IP: {health.ip_address}",
             self._table_row(f"CPU:{cpu}", f"GPU:{gpu}"),
-            self._table_row(f"Load:{load}", f"RPM:{rpm}"),
+            self._table_row(f"Pwr:{power}", f"Load:{load}"),
             self._table_row(f"RAM:{health.memory_percent:.0f}%", f"Disk:{health.disk_percent:.0f}%"),
             self._table_row(f"VIN:{voltage}", f"I:{current}"),
-            self._table_row(f"Pwr:{power}", f"Up:{health.uptime}"),
-            f"Health:{status}",
+            net_io,
+            up_health,
         ]
 
 

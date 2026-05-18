@@ -193,31 +193,31 @@ The standalone thermal viewer remembers rotation and zoom changes made with
 the control panel buttons:
 
 ```bash
-python3 core/thermal_self.py
+python3 ui/thermal_ui.py
 ```
 
 Saved settings default to:
 
 ```text
-~/.config/govision/thermal_self.json
+~/.config/govision/thermal_ui.json
 ```
 
 Override the starting rotation for one launch:
 
 ```bash
-python3 core/thermal_self.py --rotation-degrees 90
+python3 ui/thermal_ui.py --rotation-degrees 90
 ```
 
 Override the starting zoom for one launch:
 
 ```bash
-python3 core/thermal_self.py --zoom-level 2.0
+python3 ui/thermal_ui.py --zoom-level 2.0
 ```
 
 Disable persistence for a test run:
 
 ```bash
-python3 core/thermal_self.py --no-save-settings
+python3 ui/thermal_ui.py --no-save-settings
 ```
 
 ## Latency Tuning
@@ -348,7 +348,7 @@ active-high, add:
 
 In the OpenCV viewers:
 
-- `core/fusion_self.py` has a `THM Reset` control-panel button.
+- `ui/fusion_ui.py` has a `THM Reset` control-panel button.
 - `test/test_video_flir.py` accepts keyboard `r` in window mode.
 - `test/test_video_flir.py --http` exposes `/reset`.
 

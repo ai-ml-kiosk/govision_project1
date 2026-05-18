@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" role="img" aria-labelledby="title desc">
+  <title id="title">GoVision Camera UI runtime reference</title>
+  <desc id="desc">Static SVG reference of the camera viewer runtime layout with video area and right control panel.</desc>
+  <rect width="480" height="320" fill="#05070a"/>
+  <rect x="0" y="0" width="352" height="320" fill="#111827"/>
+  <g opacity="0.35" stroke="#334155" stroke-width="1">
+    <path d="M44 0v320M88 0v320M132 0v320M176 0v320M220 0v320M264 0v320M308 0v320"/>
+    <path d="M0 40h352M0 80h352M0 120h352M0 160h352M0 200h352M0 240h352M0 280h352"/>
+  </g>
+  <circle cx="176" cy="160" r="70" fill="#0f172a" stroke="#60a5fa" stroke-width="5"/>
+  <circle cx="176" cy="160" r="38" fill="#1e3a8a" stroke="#93c5fd" stroke-width="3"/>
+  <circle cx="176" cy="160" r="14" fill="#38bdf8"/>
+  <text x="12" y="24" fill="#ffffff" font-family="monospace" font-size="15">CSI 1280x720</text>
+  <rect x="352" y="0" width="128" height="320" fill="#1f1f1f"/>
+  <line x1="352" y1="0" x2="352" y2="320" stroke="#4b5563"/>
+  <text x="362" y="22" fill="#f8fafc" font-family="monospace" font-size="17">CAMERA</text>
+  <text x="362" y="44" fill="#86efac" font-family="monospace" font-size="13">LIVE</text>
+  <text x="362" y="61" fill="#e5e7eb" font-family="monospace" font-size="13">FPS 30.0</text>
+  <line x1="362" y1="74" x2="470" y2="74" stroke="#525252"/>
+  <text x="362" y="91" fill="#a3a3a3" font-family="monospace" font-size="12">CAMERA</text>
+  <rect x="362" y="96" width="108" height="28" fill="#503636" stroke="#be7070"/>
+  <text x="389" y="115" fill="#ffffff" font-family="monospace" font-size="13">Off</text>
+  <text x="362" y="151" fill="#a3a3a3" font-family="monospace" font-size="12">VIEW</text>
+  <text x="362" y="166" fill="#e5e7eb" font-family="monospace" font-size="12">Rot 360</text>
+  <rect x="362" y="170" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="378" y="187" fill="#ffffff" font-family="monospace" font-size="13">R&lt;</text>
+  <rect x="419" y="170" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="435" y="187" fill="#ffffff" font-family="monospace" font-size="13">R&gt;</text>
+  <text x="362" y="207" fill="#e5e7eb" font-family="monospace" font-size="12">Zoom 1.0x</text>
+  <rect x="362" y="211" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="378" y="228" fill="#ffffff" font-family="monospace" font-size="13">Z-</text>
+  <rect x="419" y="211" width="51" height="24" fill="#363a3e" stroke="#6e767a"/>
+  <text x="435" y="228" fill="#ffffff" font-family="monospace" font-size="13">Z+</text>
+  <rect x="362" y="286" width="51" height="24" fill="#376048" stroke="#70c484"/>
+  <text x="366" y="303" fill="#ffffff" font-family="monospace" font-size="12">Capture</text>
+  <rect x="419" y="286" width="51" height="24" fill="#503636" stroke="#be7070"/>
+  <text x="432" y="303" fill="#ffffff" font-family="monospace" font-size="12">Exit</text>
+</svg>
